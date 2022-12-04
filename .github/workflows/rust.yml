@@ -10,17 +10,11 @@ on:
 permissions:
   contents: read
 
-env:
-  CARGO_INCREMENTAL: 0
-  CARGO_NET_RETRY: 10
-  RUSTFLAGS: "-D warnings"
-  RUSTUP_MAX_RETRIES: 10
-
 jobs:
   clippy:
     timeout-minutes: 5
     runs-on: ubuntu-latest
-    container: ghcr.io/linkerd/dev:v30-rust
+    container: ghcr.io/linkerd/dev:v36-rust
     steps:
       - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
       - run: just fetch
@@ -29,10 +23,13 @@ jobs:
   run:
     timeout-minutes: 5
     runs-on: ubuntu-latest
-    container: ghcr.io/linkerd/dev:v30-rust
+    container: ghcr.io/linkerd/dev:v36-rust
     steps:
+      # XXX dev:v36-rust container doesn't include libjq
+      - run: apt update && apt install -y --no-install-recommends jq
       - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
       - run: just fetch
+      - run: just build
       - run: |
           [ "$(cargo run --frozen --quiet -- .devcontainer/devcontainer.json | jq -r .name)" = j5j ]
       - run: |

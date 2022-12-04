@@ -1,6 +1,6 @@
 [package]
 name = "j5j"
-version = "0.2.0"
+version = "0.2.1"
 description = "A bare-bones tool for converting JSON5 to plain JSON."
 license = "ISC"
 repository = "https://github.com/olix0r/j5j"

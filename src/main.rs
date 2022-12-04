@@ -1,18 +1,18 @@
 use clap::Parser;
 
 #[derive(Clone, Debug, Parser)]
-#[clap(about, version, arg_required_else_help(true))]
+#[command(about, version, arg_required_else_help(true))]
 /// Reads JSON5 files and print them to stdout as plain old JSON.
-struct Args {
-    #[clap(short, long, help = "Pretty-print JSON output")]
+struct Cmd {
+    #[arg(short, long, help = "Pretty-print JSON output")]
     pretty: bool,
 
-    #[clap(min_values(1), help = "Files to load JSON5 data from")]
+    #[arg(num_args(1..), help = "Files to load JSON5 data from")]
     files: Vec<String>,
 }
 
 fn main() {
-    let Args { pretty, files } = Args::parse();
+    let Cmd { pretty, files } = Cmd::parse();
 
     let mut failed = false;
     for file in files {
