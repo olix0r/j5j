@@ -8,7 +8,7 @@ Based on `json5-to-json by @callum-oakley.
 
 ```console
 :; j5j .devcontainer/devcontainer.json
-{"extensions":["DavidAnson.vscode-markdownlint","kokakiwi.vscode-just","NathanRidley.autotrim","redhat.vscode-yaml","rust-lang.rust-analyzer","samverschueren.final-newline","tamasfe.even-better-toml"],"image":"ghcr.io/linkerd/dev:v30","mounts":["source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind"],"name":"j5j","overrideCommand":false,"remoteUser":"code","runArgs":["--init","--memory=12g","--memory-swap=12g","--net=host"]}
+{"extensions":["DavidAnson.vscode-markdownlint","kokakiwi.vscode-just","NathanRidley.autotrim","redhat.vscode-yaml","rust-lang.rust-analyzer","samverschueren.final-newline","tamasfe.even-better-toml"],"image":"ghcr.io/linkerd/dev:v36","mounts":["source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind"],"name":"j5j","overrideCommand":false,"remoteUser":"code","runArgs":["--init","--memory=12g","--memory-swap=12g","--net=host"]}
 ```
 
 ```console
@@ -23,7 +23,7 @@ Based on `json5-to-json by @callum-oakley.
     "samverschueren.final-newline",
     "tamasfe.even-better-toml"
   ],
-  "image": "ghcr.io/linkerd/dev:v30",
+  "image": "ghcr.io/linkerd/dev:v36",
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind"
   ],

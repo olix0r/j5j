@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/release.yml
+      - justfile
   push:
     tags:
       - 'v*'
@@ -11,19 +12,12 @@ on:
 permissions:
   contents: write
 
-env:
-  CARGO_INCREMENTAL: 0
-  CARGO_NET_RETRY: 10
-  RUSTFLAGS: "-D warnings"
-  RUSTUP_MAX_RETRIES: 10
-
 jobs:
-  meta:
-    timeout-minutes: 5
+  publish:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
-    container: ghcr.io/linkerd/dev:v30-rust
+    container: ghcr.io/linkerd/dev:v36-rust-musl
     steps:
-      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
       - id: meta
         shell: bash
         run: |
@@ -31,39 +25,37 @@ jobs:
           shopt -s extglob
           ref="${{ github.ref }}"
           if [[ "$ref" == refs/tags/v+([0-9]).+([0-9]).+([0-9])?(-+([a-z0-9-])) ]]; then
-            tv=${ref##refs/tags/}
-            cv=$(just --evaluate version)
-            if [ "${tv#v}" != "$cv" ]; then
-              echo "::error ::Crate version v${cv} does not match tag version ${tv}"
-              exit 1
-            fi
-            echo ::set-output name=version::"$tv"
-            echo ::set-output name=publish::true
+            v=${ref##refs/tags/}
+            echo version="$v" >> "$GITHUB_OUTPUT"
           else
-            sha="${{ github.sha }}"
-            echo ::set-output name=version::"test-${sha:0:7}"
+            echo "Not a release version" >&2
           fi
-    outputs:
-      publish: ${{ steps.meta.outputs.publish }}
-      version: ${{ steps.meta.outputs.version }}
 
-  package:
-    needs: [meta]
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-    container: ghcr.io/linkerd/dev:v30-rust
-    steps:
+      # XXX dev:v36-rust container doesn't include libjq
+      - run: apt update && apt install -y --no-install-recommends jq
+
       - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
       - run: just fetch
-      - run: just build
-      - run: just package
 
-      - if: needs.meta.outputs.publish == 'true'
+      - if: steps.meta.outputs.version
+        run: |
+          v=$(just crate-version)
+          if [ "${v}" != '${{ steps.meta.outputs.version }}' ]; then
+            echo "::error ::Crate version '${v}' does not match tag version '${{ steps.meta.outputs.version }}'"
+            exit 1
+          fi
+
+      - run: echo PKG_DIR="$(mktemp -d "$RUNNER_TEMP/pkg.XXX")" >> "$GITHUB_ENV"
+      - run: just profile=release target=x86_64-unknown-linux-musl package "$PKG_DIR"
+      - run: just profile=release target=aarch64-unknown-linux-musl package "$PKG_DIR"
+      - run: find "$PKG_DIR"/release -ls
+
+      - if: steps.meta.outputs.version
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ${{ needs.meta.outputs.version }}
-          files: target/j5j-${{ needs.meta.outputs.version }}-*.tar.gz
+          name: ${{ steps.meta.outputs.version }}
+          files: ${{ env.PKG_DIR }}/release/*
           generate_release_notes: true
 
